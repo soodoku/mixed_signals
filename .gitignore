@@ -2,6 +2,9 @@
 Thumbs.db
 ehthumbs.db
 
+# Ad hoc
+data/movie_data_1950_2020.csv
+
 # Folder config file
 Desktop.ini
 
