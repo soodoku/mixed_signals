@@ -1,12 +1,17 @@
 ## Mixed Signals: Movie Quality Assessments Across Platforms
 
-![Guardians](goog.png)
+![Guardians](figs/goog.png)
 
 Is the difference between ratings across different platforms for *Guardians of Galaxy* the norm? 
 
 ## Data from 1950--2020
 
-We iterated over a list of all movies between 1950--2020 from Wikipedia and then scraped the Google Knowledge Panel using APIfy. The scripts and data are post [here](https://github.com/NoahFinberg/google_kg_movie_scraper). 
+We iterated over a list of all movies between 1950--2020 from Wikipedia and then scraped the Google Knowledge Panel using APIfy. The scripts and data are posted [here](https://github.com/NoahFinberg/google_kg_movie_scraper). 
+
+## Analyses
+For all platforms for which we had ratings for 100 or more movies, we estimated a correlation matrix (Pearson's), which is plotted below. The median correlation between average ratings of two platforms was .37. (The median Spearman's correlation was .35.)
+
+![Correlation Plot](figs/pearson-corplot.png)
 
 
 ## Top 100

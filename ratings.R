@@ -7,6 +7,7 @@ library(tidyverse)
 library(rvest)
 library(stringr)
 library(ggplot2)
+library(ggcorplot)
 
 # Load manually collected data
 movies <- read_csv("data/movies.csv")
@@ -71,11 +72,63 @@ movie_subs <- movie_all %>%
 
 write_csv(movie_subs, file = "data/movie_all_subset.csv")
 
-# Cor
+# Analyses
 ratings <- ratings[!grepl(paste0("maturity_rating", collapse = "|"), ratings)]
 
-a <- cor(cbind(movie_subs[, ratings], movie_subs$p_google_likes), use = "pairwise.complete.obs")
-median(a[upper.tri(a, diag = F)], na.rm = T)
+# Total n 
+nrow(movie_subs) -colSums(is.na(cbind(movie_subs[, ratings], movie_subs$p_google_likes)))
 
-b <- cor(cbind(movie_subs[, ratings], movie_subs$p_google_likes), use = "pairwise.complete.obs", method ="spearman")
-median(b[upper.tri(b, diag = F)], na.rm = T)
+# Platforms with 100 or more ratings
+ratings_100 <- c(ratings, "p_google_likes")[nrow(movie_subs) - colSums(is.na(cbind(movie_subs[, ratings], movie_subs$p_google_likes))) >= 100]
+
+# Correlation Table
+pearson_cormat_100 <- cor(cbind(movie_subs[, ratings_100]), use = "pairwise.complete.obs")
+median(pearson_cormat_100[upper.tri(pearson_cormat_100, diag = F)], na.rm = T)
+
+spearman_cormat_100 <- cor(cbind(movie_subs[, ratings_100]), use = "pairwise.complete.obs", method ="spearman")
+median(spearman_cormat_100[upper.tri(spearman_cormat_100, diag = F)], na.rm = T)
+
+# Platforms with 50 or more ratings
+ratings_50 <- c(ratings, "p_google_likes")[nrow(movie_subs) - colSums(is.na(cbind(movie_subs[, ratings], movie_subs$p_google_likes))) >= 50]
+
+# Correlation Table
+pearson_cormat_50 <- cor(cbind(movie_subs[, ratings_50]), use = "pairwise.complete.obs")
+median(pearson_cormat_50[upper.tri(pearson_cormat_50, diag = F)], na.rm = T)
+
+spearman_cormat_50 <- cor(cbind(movie_subs[, ratings_50]), use = "pairwise.complete.obs", method ="spearman")
+median(spearman_cormat_50[upper.tri(spearman_cormat_50, diag = F)], na.rm = T)
+
+# Pearson's Correlation Plot
+ggcorrplot(pearson_cormat_100, type = "lower",
+   outline.col = "white",
+   lab = T,
+   ggtheme = ggplot2::theme_void,
+   colors = c("#6D9EC1", "white", "#E46726"))
+ggsave(file = "figs/pearson-corplot.png")
+
+# Spearman's Correlation Plot
+ggcorrplot(spearman_cormat_100, type = "lower",
+   outline.col = "white",
+   lab = T,
+   ggtheme = ggplot2::theme_void,
+   colors = c("#6D9EC1", "white", "#E46726"))
+ggsave(file = "figs/spearman-corplot.png")
+
+# Loess
+ggplot(movie_subs, aes(release_year, rotten_tomatoes_rating)) +
+  geom_point(alpha = .05) +
+  geom_smooth(method = "loess") + 
+  theme_minimal() +
+  theme(panel.grid.major = element_line(color="#e1e1e1",  linetype = "dotted"),
+	  panel.grid.minor = element_blank(),
+	  legend.position  ="bottom",
+	  legend.key      = element_blank(),
+	  legend.key.width = unit(1, "cm"),
+	  axis.title   = element_text(size = 10, color = "#555555"),
+	  axis.text    = element_text(size = 10, color = "#555555"),
+	  axis.ticks.y = element_blank(),
+	  axis.title.x = element_text(vjust = -1, margin = margin(10, 0, 0, 0)),
+	  axis.title.y = element_text(vjust = 1),
+	  axis.ticks   = element_line(color = "#e3e3e3", size = .2),
+	  plot.margin = unit(c(0, 1, 0, 0), "cm"))
+
