@@ -80,6 +80,7 @@ nrow(movie_subs) -colSums(is.na(cbind(movie_subs[, ratings], movie_subs$p_google
 
 # Platforms with 100 or more ratings
 ratings_100 <- c(ratings, "p_google_likes")[nrow(movie_subs) - colSums(is.na(cbind(movie_subs[, ratings], movie_subs$p_google_likes))) >= 100]
+length(ratings_100)
 
 # Correlation Table
 pearson_cormat_100 <- cor(cbind(movie_subs[, ratings_100]), use = "pairwise.complete.obs")
