@@ -8,6 +8,8 @@ library(rvest)
 library(stringr)
 library(ggplot2)
 library(ggcorplot)
+library(goji)
+library(tidyr)
 
 # Load manually collected data
 movies <- read_csv("data/movies.csv")
@@ -78,6 +80,17 @@ ratings <- ratings[!grepl(paste0("maturity_rating", collapse = "|"), ratings)]
 # Total n 
 nrow(movie_subs) -colSums(is.na(cbind(movie_subs[, ratings], movie_subs$p_google_likes)))
 
+df = data.frame(n_movies = nrow(movie_subs) -colSums(is.na(cbind(movie_subs[, ratings], movie_subs$p_google_likes))))
+df$platform <- rownames(df)
+
+ggplot(df, aes(x = reorder(platform, n_movies), y = n_movies)) + 
+    geom_bar(stat="identity") +
+    coord_flip() +
+    theme_minimal() + 
+    xlab("") + 
+    scale_y_continuous(breaks = round(seq(0, max(df$n_movies), by = 1000), 1))
+ggsave(file = "figs/n_movies.png")
+
 # Platforms with 100 or more ratings
 ratings_100 <- c(ratings, "p_google_likes")[nrow(movie_subs) - colSums(is.na(cbind(movie_subs[, ratings], movie_subs$p_google_likes))) >= 100]
 length(ratings_100)
@@ -115,8 +128,17 @@ ggcorrplot(spearman_cormat_100, type = "lower",
    colors = c("#6D9EC1", "white", "#E46726"))
 ggsave(file = "figs/spearman-corplot.png")
 
-# Loess
-ggplot(movie_subs, aes(release_year, rotten_tomatoes_rating)) +
+## Other Insights
+
+# Reviews over time
+# Let's create an average score per movie using the 3 common
+movie_subs$rotten_tomatoes_rating01 <- zero1(movie_subs$rotten_tomatoes_rating)
+movie_subs$IMDb_rating01            <- zero1(movie_subs$IMDb_rating)
+movie_subs$p_google_likes01         <- zero1(movie_subs$p_google_likes)
+
+movie_subs$avg_rating <- with(movie_subs, rowMeans(cbind(rotten_tomatoes_rating01, IMDb_rating01, p_google_likes01)))
+
+ggplot(movie_subs, aes(release_year, avg_rating)) +
   geom_point(alpha = .05) +
   geom_smooth(method = "loess") + 
   theme_minimal() +
@@ -131,5 +153,38 @@ ggplot(movie_subs, aes(release_year, rotten_tomatoes_rating)) +
 	  axis.title.x = element_text(vjust = -1, margin = margin(10, 0, 0, 0)),
 	  axis.title.y = element_text(vjust = 1),
 	  axis.ticks   = element_line(color = "#e3e3e3", size = .2),
-	  plot.margin = unit(c(0, 1, 0, 0), "cm"))
+	  plot.margin = unit(c(0, 1, 0, 0), "cm")) + 
+      scale_x_continuous(breaks = round(seq(min(movie_subs$release_year, na.rm = T), max(movie_subs$release_year, na.rm = T), by = 10), 1)) + 
+      scale_y_continuous(breaks = round(seq(min(movie_subs$avg_rating, na.rm = T), max(movie_subs$avg_rating, na.rm = T), by = .1), 1))
+
+ggsave(file = "figs/rating_over_time.png")
+
+# Over time ratings by platform
+movie_subs$id <- 1:nrow(movie_subs)
+rating_long <- gather(movie_subs[, c("id", "release_year", "IMDb_rating01", "rotten_tomatoes_rating01", "p_google_likes01")], platform, rating, IMDb_rating01:p_google_likes01, factor_key=TRUE)
+
+ggplot(rating_long, aes(release_year, rating, colour = platform)) +
+  geom_smooth(method = "loess") + 
+  theme_minimal() +
+  theme(panel.grid.major = element_line(color="#e1e1e1",  linetype = "dotted"),
+	  panel.grid.minor = element_blank(),
+	  legend.position  ="bottom",
+	  legend.key      = element_blank(),
+	  legend.key.width = unit(1, "cm"),
+	  axis.title   = element_text(size = 10, color = "#555555"),
+	  axis.text    = element_text(size = 10, color = "#555555"),
+	  axis.ticks.y = element_blank(),
+	  axis.title.x = element_text(vjust = -1, margin = margin(10, 0, 0, 0)),
+	  axis.title.y = element_text(vjust = 1),
+	  axis.ticks   = element_line(color = "#e3e3e3", size = .2),
+	  plot.margin = unit(c(0, 1, 0, 0), "cm")) + 
+      scale_x_continuous(breaks = round(seq(min(movie_subs$release_year, na.rm = T), max(movie_subs$release_year, na.rm = T), by = 10), 1)) + 
+      scale_y_continuous(breaks = round(seq(min(movie_subs$avg_rating, na.rm = T), max(movie_subs$avg_rating, na.rm = T), by = .1), 1))
+
+ggsave(file = "figs/rating_over_time_by_platform.png")
+
+# Ratings by genre
+
+
+
 
