@@ -201,7 +201,7 @@ time_corr <- movie_subs %>%
                n_rotten_goog = sum(!is.na(rotten_tomatoes_rating) & !is.na(p_google_likes)),
                n_imdb_goog   = sum(!is.na(IMDb_rating) & !is.na(p_google_likes)))
 
-png("figs/time_corr.png", height = 35*nrow(maturity_corr), width = 90*ncol(maturity_corr))
+png("figs/time_corr.png", height = 35*nrow(time_corr), width = 90*ncol(time_corr))
 grid.table(time_corr)
 dev.off()
 
