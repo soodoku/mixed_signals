@@ -18,11 +18,18 @@ We subset our initial analysis on 48,613 (average) ratings from the 12 platforms
 
 ![Correlation Plot](figs/pearson-corplot.png)
 
-### Movie Ratings Over Time?
+### Movie Ratings Over Time
 
 ![Rating Over Time](figs/rating_over_time.png)
 
 ![Rating Over Time by Platform](figs/rating_over_time_by_platform.png)
+
+### Movie Ratings By Maturity Ratings and Genre
+
+![Rating by Maturity Rating](figs/maturity_corr.png)
+
+![Rating by Genre](figs/genre_corr.png)
+
 
 ### Top 100
 
