@@ -184,6 +184,27 @@ ggplot(rating_long, aes(release_year, rating, colour = platform)) +
 
 ggsave(file = "figs/rating_over_time_by_platform.png")
 
+## Correlation over time
+
+# Round to nearest decade
+movie_subs$decade <- round(movie_subs$release_year/10)*10
+
+time_corr <- movie_subs %>%
+     select("decade", "IMDb_rating", "rotten_tomatoes_rating", "p_google_likes") %>%
+     group_by(decade) %>%
+     filter(!is.na(decade)) %>%
+     summarise(rotten_imdb   = round(cor(IMDb_rating, rotten_tomatoes_rating, use = "pairwise.complete.obs"), 2), 
+               rotten_google = round(cor(rotten_tomatoes_rating, p_google_likes, use = "pairwise.complete.obs"), 2), 
+               imdb_google   = round(cor(IMDb_rating, p_google_likes, use = "pairwise.complete.obs"), 2),
+               n = n(),
+               n_rotten_imdb = sum(!is.na(rotten_tomatoes_rating) & !is.na(IMDb_rating)),
+               n_rotten_goog = sum(!is.na(rotten_tomatoes_rating) & !is.na(p_google_likes)),
+               n_imdb_goog   = sum(!is.na(IMDb_rating) & !is.na(p_google_likes)))
+
+png("figs/time_corr.png", height = 35*nrow(maturity_corr), width = 90*ncol(maturity_corr))
+grid.table(time_corr)
+dev.off()
+
 # Ratings by maturity ratings
 # Let's just do the diff.
 movie_subs$rotten_imdb_diff   <- movie_subs$rotten_tomatoes_rating01 - movie_subs$IMDb_rating01
