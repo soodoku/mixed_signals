@@ -11,6 +11,7 @@ library(ggcorplot)
 library(goji)
 library(tidyr)
 library(gridExtra)
+library(ggbiplot)
 
 # Load manually collected data
 movies <- read_csv("data/movies.csv")
@@ -263,3 +264,25 @@ genre_corr <- movie_subs %>%
 png("figs/genre_corr.png", height = 35*nrow(genre_corr), width = 90*ncol(genre_corr))
 grid.table(genre_corr)
 dev.off()
+
+# Let's get the principal components
+
+movie_pca3 <- prcomp( ~ IMDb_rating + rotten_tomatoes_rating + p_google_likes, data=movie_subs, center = TRUE, scale = TRUE, na.action = na.omit)
+movie_pca4 <- prcomp( ~ IMDb_rating + rotten_tomatoes_rating + p_google_likes + meta_critic_rating, data=movie_subs, center = TRUE, scale = TRUE, na.action = na.omit)
+
+summary(movie_pca3)
+summary(movie_pca4)
+
+ggbiplot(movie_pca4, ellipse = T, circle = T, obs.scae = 1, var.scale = 1) +  
+   scale_colour_manual(name="Origin", values= c("forest green", "red3", "dark blue")) + 
+   ggtitle("PCA of mtcars dataset") + 
+   theme_minimal() +
+   theme(legend.position = "bottom")
+
+screeplot(movie_pca4, type = "l")
+
+pcs     <- as.data.frame(movie_pca3$x)
+pcs$id  <- as.numeric(rownames(movie_pca3$x))
+
+pcs_id <- pcs %>% left_join(movie_subs, by = "id")
+cor(cbind(pcs_id$IMDb_rating, pcs_id$rotten_tomatoes_rating, pcs_id$PC1, pcs_id$PC2, pcs_id$PC3))
