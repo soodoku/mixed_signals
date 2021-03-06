@@ -42,6 +42,19 @@ Next, we investigate how the correlation between ratings across platforms varies
  
 ![Correlation by Genre](figs/genre_corr.png)
 
+### PCA
+
+For IMDB, Google, and Rotten Tomatoes, here's the summary of the principal components.
+
+|                      |    PC1 |   PC2 |    PC3|
+|----------------------|--------|-------|-------|
+|Standard deviation    | 1.3951 |0.9045 |0.48538|
+|Proportion of Variance| 0.6487 |0.2727 |0.07853|
+|Cumulative Proportion | 0.6487 |0.9215 |1.00000|
+
+
+![Biplot](figs/biplot-pca3.png)
+
 ### Top 100
 
 I estimated the correlation between ratings for [movies that earned the most (unadjusted for inflation) on the domestic box office](https://www.filmsite.org/boxoffice.html). (Presumably variation in ratings for top 100 is smaller than if we had the entire sample. And that means the correlation is estimated over a small range. It is also likely that lots of people rated these movies so the measures are likely precise.)

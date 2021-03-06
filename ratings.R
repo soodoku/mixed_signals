@@ -273,13 +273,18 @@ movie_pca4 <- prcomp( ~ IMDb_rating + rotten_tomatoes_rating + p_google_likes + 
 summary(movie_pca3)
 summary(movie_pca4)
 
-ggbiplot(movie_pca4, ellipse = T, circle = T, obs.scae = 1, var.scale = 1) +  
-   scale_colour_manual(name="Origin", values= c("forest green", "red3", "dark blue")) + 
-   ggtitle("PCA of mtcars dataset") + 
-   theme_minimal() +
-   theme(legend.position = "bottom")
-
+screeplot(movie_pca3, type = "l")
 screeplot(movie_pca4, type = "l")
+
+ggbiplot(movie_pca4, ellipse = T, circle = T, alpha = .05, obs.scale = 1, var.scale = 1, varname.adjust = 1) +  
+   scale_colour_manual(name="Origin", values= c("forest green", "red3", "dark blue")) + 
+   ggtitle("PCA Bi-plot") + 
+   theme_minimal() +
+   theme(legend.position = "bottom") + 
+   scale_x_continuous(limits = c(-3.5, 6), breaks = seq(-4, 6, by = 1), 1) + 
+   scale_y_continuous(limits = c(-3.5, 6), breaks = seq(-4, 6, by = 1), 1)
+
+ggsave(file = "figs/biplot-pca3.png")
 
 pcs     <- as.data.frame(movie_pca3$x)
 pcs$id  <- as.numeric(rownames(movie_pca3$x))
