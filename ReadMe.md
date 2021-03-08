@@ -18,6 +18,38 @@ We estimate the correlation between the average platform ratings. (See below for
 
 ![Correlation Plot](figs/pearson-corplot.png)
 
+### Largest Differences
+
+Movies with the largest difference between Rotten Tomatoes and IMDb Rating.
+
+|title                        | rotten_tomatoes_rating| IMDb_rating|
+|:----------------------------|----------------------:|-----------:|
+|After Last Season            |                     92|         1.6|
+|The Grinch                   |                    100|         3.7|
+|The Catered Affair           |                     17|         7.5|
+|Sparkle                      |                     10|         6.9|
+|Only the Strong              |                      8|         6.7|
+|The Life of David Gale       |                     19|         7.6|
+|The Vanishing of Sidney Hall |                     11|         6.9|
+|I'll Never Forget You        |                     14|         7.1|
+|The Professor                |                     10|         6.7|
+|Gang of Roses                |                     75|         2.4|
+
+Movies with the largest difference between Rotten Tomatoes and Google Rating.
+
+|title                             | rotten_tomatoes_rating| p_google_likes|
+|:---------------------------------|----------------------:|--------------:|
+|After Last Season                 |                     92|              6|
+|Faithful                          |                      7|             95|
+|Supercross                        |                      5|             92|
+|Material Girls                    |                      4|             91|
+|Only the Strong                   |                      8|             94|
+|Big Mommas: Like Father, Like Son |                      5|             91|
+|The Covenant                      |                      4|             90|
+|McHale's Navy                     |                      3|             89|
+|Equalizer 2000                    |                     11|             96|
+|Grind                             |                      8|             93|
+
 ### Movie Ratings Over Time
 
 To see how movies have been rated over time, we plotted the average of a movie-quality index over time (see below). To build an index of movie quality, we rescaled the ratings from the three platforms for which we have the most data---IMDB, Rotten Tomatoes, and Google---to lie between 0 and 1 and averaged it. The figure shows that movie quality steadily declined between 1950 and 2000. And since then, there has been a modest uptick.

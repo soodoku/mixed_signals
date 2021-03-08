@@ -7,7 +7,7 @@ library(tidyverse)
 library(rvest)
 library(stringr)
 library(ggplot2)
-library(ggcorplot)
+library(ggcorrplot)
 library(goji)
 library(tidyr)
 library(gridExtra)
@@ -130,15 +130,38 @@ ggcorrplot(spearman_cormat_100, type = "lower",
    colors = c("#6D9EC1", "white", "#E46726"))
 ggsave(file = "figs/spearman-corplot.png")
 
-## Other Insights
-
-# Reviews over time
+## Additional convenient recode
 # Let's create an average score per movie using the 3 common
 movie_subs$rotten_tomatoes_rating01 <- zero1(movie_subs$rotten_tomatoes_rating)
 movie_subs$IMDb_rating01            <- zero1(movie_subs$IMDb_rating)
 movie_subs$p_google_likes01         <- zero1(movie_subs$p_google_likes)
 
 movie_subs$avg_rating <- with(movie_subs, rowMeans(cbind(rotten_tomatoes_rating01, IMDb_rating01, p_google_likes01)))
+
+# Let's just do the diff.
+movie_subs$rotten_imdb_diff   <- movie_subs$rotten_tomatoes_rating01 - movie_subs$IMDb_rating01
+movie_subs$rotten_google_diff <- movie_subs$rotten_tomatoes_rating01 - movie_subs$p_google_likes01
+movie_subs$imdb_google_diff   <- movie_subs$IMDb_rating01 - movie_subs$p_google_likes01
+
+# Where X > mean and Y < mean
+movie_subs$rotten_imdb_cor_dummy    <- with(movie_subs, (rotten_tomatoes_rating > mean(rotten_tomatoes_rating, na.rm = T)) & (IMDb_rating < mean(IMDb_rating, na.rm = T)))
+movie_subs$rotten_google_cor_dummy  <- with(movie_subs, (rotten_tomatoes_rating > mean(rotten_tomatoes_rating, na.rm = T)) & (p_google_likes < mean(p_google_likes, na.rm = T)))
+movie_subs$imdb_google_cor_dummy    <- with(movie_subs, (IMDb_rating > mean(IMDb_rating, na.rm = T))  &  (p_google_likes < mean(p_google_likes, na.rm = T)))
+
+# List top 10 larges differences between ratings (IMDB, Rotten, Google)
+top10_rotten_imdb_diff <- movie_subs[, c("title", "rotten_tomatoes_rating", "IMDb_rating")][order(-abs(movie_subs$rotten_imdb_diff)), ][1:10, ]
+knitr::kable(top10_rotten_imdb_diff)
+
+top100_rotten_imdb_diff <- movie_subs[, c("title", "release_year", "rotten_tomatoes_rating", "IMDb_rating")][order(-abs(movie_subs$rotten_imdb_diff)), ][1:100, ]
+write.csv(top100_rotten_imdb_diff, file = "tabs/top100_rotten_imdb_dif.csv", row.names = F)
+
+top10_rotten_google_diff <- movie_subs[, c("title", "rotten_tomatoes_rating", "p_google_likes")][order(-abs(movie_subs$rotten_google_diff)), ][1:10, ]
+knitr::kable(top10_rotten_google_diff)
+
+# List % cases where IMDB is above its mean, Rotten below, etc. --- a dummy correlation
+
+
+# Reviews over time
 
 ggplot(movie_subs, aes(release_year, avg_rating)) +
   geom_point(alpha = .05) +
@@ -194,7 +217,7 @@ time_corr <- movie_subs %>%
      select("decade", "IMDb_rating", "rotten_tomatoes_rating", "p_google_likes") %>%
      group_by(decade) %>%
      filter(!is.na(decade)) %>%
-     summarise(rotten_imdb   = round(cor(IMDb_rating, rotten_tomatoes_rating, use = "pairwise.complete.obs"), 2), 
+     dplyr::summarise(rotten_imdb   = round(cor(IMDb_rating, rotten_tomatoes_rating, use = "pairwise.complete.obs"), 2), 
                rotten_google = round(cor(rotten_tomatoes_rating, p_google_likes, use = "pairwise.complete.obs"), 2), 
                imdb_google   = round(cor(IMDb_rating, p_google_likes, use = "pairwise.complete.obs"), 2),
                n = n(),
@@ -207,16 +230,12 @@ grid.table(time_corr)
 dev.off()
 
 # Ratings by maturity ratings
-# Let's just do the diff.
-movie_subs$rotten_imdb_diff   <- movie_subs$rotten_tomatoes_rating01 - movie_subs$IMDb_rating01
-movie_subs$rotten_google_diff <- movie_subs$rotten_tomatoes_rating01 - movie_subs$p_google_likes01
-movie_subs$imdb_google_diff   <- movie_subs$IMDb_rating01 - movie_subs$p_google_likes01
 
 movie_subs %>%
      select(maturity_rating, rotten_imdb_diff, rotten_google_diff, imdb_google_diff) %>%
      group_by(maturity_rating) %>%
      filter(maturity_rating %in% c("G", "PG", "PG-13", "R")) %>%
-     summarise(rotten_imdb   = mean(rotten_imdb_diff, na.rm = T), 
+     dplyr::summarise(rotten_imdb   = mean(rotten_imdb_diff, na.rm = T), 
                rotten_google = mean(rotten_google_diff, na.rm = T),
                imdb_google   = mean(imdb_google_diff, na.rm = T))
 
@@ -224,7 +243,7 @@ maturity_corr <- movie_subs %>%
      select("maturity_rating", "IMDb_rating", "rotten_tomatoes_rating", "p_google_likes") %>%
      group_by(maturity_rating) %>%
      filter(maturity_rating %in% c("G", "PG", "PG-13", "R")) %>%
-     summarise(rotten_imdb   = round(cor(IMDb_rating, rotten_tomatoes_rating, use = "pairwise.complete.obs"), 2), 
+     dplyr::summarise(rotten_imdb   = round(cor(IMDb_rating, rotten_tomatoes_rating, use = "pairwise.complete.obs"), 2), 
                rotten_google = round(cor(rotten_tomatoes_rating, p_google_likes, use = "pairwise.complete.obs"), 2), 
                imdb_google   = round(cor(IMDb_rating, p_google_likes, use = "pairwise.complete.obs"), 2),
                n = n(),
@@ -244,7 +263,7 @@ movie_subs %>%
      select(genre, rotten_imdb_diff, rotten_google_diff, imdb_google_diff) %>%
      group_by(genre) %>%
      filter(genre %in% c("Romance/Rom-com", "Romance/Drama", "Action/Thriller", "Drama", "PG-13", "Horror/Thriller", "Comedy/Romance", "Drama/Romance", "Family/Comedy", "Comedy", "Thriller/Drama")) %>%
-     summarise(rotten_imdb   = mean(rotten_imdb_diff, na.rm = T), 
+     dplyr::summarise(rotten_imdb   = mean(rotten_imdb_diff, na.rm = T), 
                rotten_google = mean(rotten_google_diff, na.rm = T),
                imdb_google   = mean(imdb_google_diff, na.rm = T))
 
@@ -252,7 +271,7 @@ genre_corr <- movie_subs %>%
      select(genre, "IMDb_rating", "rotten_tomatoes_rating", "p_google_likes") %>%
      group_by(genre) %>%
      filter(genre %in% c("Romance/Rom-com", "Romance/Drama", "Action/Thriller", "Drama", "PG-13", "Horror/Thriller", "Comedy/Romance", "Drama/Romance", "Family/Comedy", "Comedy", "Thriller/Drama")) %>%
-     summarise(rotten_imdb   = round(cor(IMDb_rating, rotten_tomatoes_rating, use = "pairwise.complete.obs"), 2), 
+     dplyr::summarise(rotten_imdb   = round(cor(IMDb_rating, rotten_tomatoes_rating, use = "pairwise.complete.obs"), 2), 
                rotten_google = round(cor(rotten_tomatoes_rating, p_google_likes, use = "pairwise.complete.obs"), 2), 
                imdb_google   = round(cor(IMDb_rating, p_google_likes, use = "pairwise.complete.obs"), 2),
                n = n(),
@@ -277,7 +296,7 @@ screeplot(movie_pca3, type = "l")
 screeplot(movie_pca4, type = "l")
 
 ggbiplot(movie_pca4, ellipse = T, circle = T, alpha = .05, obs.scale = 1, var.scale = 1, varname.adjust = 1) +  
-   scale_colour_manual(name="Origin", values= c("forest green", "red3", "dark blue")) + 
+   scale_colour_manual(name = "Origin", values= c("forest green", "red3", "dark blue")) + 
    ggtitle("PCA Bi-plot") + 
    theme_minimal() +
    theme(legend.position = "bottom") + 
