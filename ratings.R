@@ -24,18 +24,27 @@ movie_all <- read_csv("data/movie_data_1950_2020.csv")
 # read_html(movie_all$kp_whole_page_html[[1]]) %>% html_nodes(".NY3LVe") %>% html_text()
 
 movie_all$ratings_list <- NA
+movie_all$year <- NA
 
 for(i in 1:nrow(movie_all)){
 	if (movie_all$kp_whole_page_html[i] != "[]") {
 		dat <- read_html(movie_all$kp_whole_page_html[i])
 		dat2 <- dat %>% html_nodes(".NY3LVe") %>% html_text()
+    b <- dat %>% xml_find_all("//*[@data-attrid]")
 		movie_all$ratings_list[i] <- list(dat2)
-	}
-
-	else {
-		movie_all$ratings_list[i] <- NA
+    b <- b[xml_attr(b, "data-attrid")=="subtitle"] %>% html_text()
+    movie_all$year[i] <- ifelse(length(b) < 1, NA, trimws(gsub("\\‧.*$", "", b), "r"))
 	}
 }
+
+# else {
+#   movie_all$ratings_list[i] <- NA
+# }
+#}
+
+temp_year <- gsub("[^0-9.]", "", movie_all$year)
+new_temp_year <- substr(temp_year, nchar(temp_year)-3, nchar(temp_year))
+movie_all$year <- as.numeric(ifelse(nchar(new_temp_year) < 4 | new_temp_year == "0419", NA, new_temp_year))
 
 matcher <- function(x, strmatch) {
 	res <- NA
@@ -69,7 +78,7 @@ movie_all$p_google_likes <- as.numeric(gsub("%", "", movie_all$p_google_likes))
 
 ratings <- names(movie_all)[grep("_rating", names(movie_all))]
 movie_subs <- movie_all %>%
-	select("title", "subtitle", "release_year",
+	select("title", "subtitle", "year", 
 		   "genre", "duration", 
 		   ratings, "p_google_likes", 
 		   "box_office", "release_date", "directors", "awards", "film_series", "producers", "budget")
@@ -152,7 +161,7 @@ movie_subs$imdb_google_cor_dummy    <- with(movie_subs, (IMDb_rating > mean(IMDb
 top10_rotten_imdb_diff <- movie_subs[, c("title", "rotten_tomatoes_rating", "IMDb_rating")][order(-abs(movie_subs$rotten_imdb_diff)), ][1:10, ]
 knitr::kable(top10_rotten_imdb_diff)
 
-top100_rotten_imdb_diff <- movie_subs[, c("title", "release_year", "rotten_tomatoes_rating", "IMDb_rating")][order(-abs(movie_subs$rotten_imdb_diff)), ][1:100, ]
+top100_rotten_imdb_diff <- movie_subs[, c("title", "year", "rotten_tomatoes_rating", "IMDb_rating")][order(-abs(movie_subs$rotten_imdb_diff)), ][1:100, ]
 write.csv(top100_rotten_imdb_diff, file = "tabs/top100_rotten_imdb_dif.csv", row.names = F)
 
 top10_rotten_google_diff <- movie_subs[, c("title", "rotten_tomatoes_rating", "p_google_likes")][order(-abs(movie_subs$rotten_google_diff)), ][1:10, ]
@@ -163,7 +172,7 @@ knitr::kable(top10_rotten_google_diff)
 
 # Reviews over time
 
-ggplot(movie_subs, aes(release_year, avg_rating)) +
+ggplot(movie_subs, aes(year, avg_rating)) +
   geom_point(alpha = .05) +
   geom_smooth(method = "loess") + 
   theme_minimal() +
@@ -179,16 +188,16 @@ ggplot(movie_subs, aes(release_year, avg_rating)) +
 	  axis.title.y = element_text(vjust = 1),
 	  axis.ticks   = element_line(color = "#e3e3e3", size = .2),
 	  plot.margin = unit(c(0, 1, 0, 0), "cm")) + 
-      scale_x_continuous(breaks = round(seq(min(movie_subs$release_year, na.rm = T), max(movie_subs$release_year, na.rm = T), by = 10), 1)) + 
+      scale_x_continuous(breaks = round(seq(min(movie_subs$year, na.rm = T), max(movie_subs$year, na.rm = T), by = 10), 1)) + 
       scale_y_continuous(breaks = round(seq(min(movie_subs$avg_rating, na.rm = T), max(movie_subs$avg_rating, na.rm = T), by = .1), 1))
 
 ggsave(file = "figs/rating_over_time.png")
 
 # Over time ratings by platform
 movie_subs$id <- 1:nrow(movie_subs)
-rating_long <- gather(movie_subs[, c("id", "maturity_rating", "genre", "release_year", "IMDb_rating01", "rotten_tomatoes_rating01", "p_google_likes01")], platform, rating, IMDb_rating01:p_google_likes01, factor_key=TRUE)
+rating_long <- gather(movie_subs[, c("id", "maturity_rating", "genre", "year", "IMDb_rating01", "rotten_tomatoes_rating01", "p_google_likes01")], platform, rating, IMDb_rating01:p_google_likes01, factor_key=TRUE)
 
-ggplot(rating_long, aes(release_year, rating, colour = platform)) +
+ggplot(rating_long, aes(year, rating, colour = platform)) +
   geom_smooth(method = "loess") + 
   theme_minimal() +
   theme(panel.grid.major = element_line(color="#e1e1e1",  linetype = "dotted"),
@@ -203,7 +212,7 @@ ggplot(rating_long, aes(release_year, rating, colour = platform)) +
 	  axis.title.y = element_text(vjust = 1),
 	  axis.ticks   = element_line(color = "#e3e3e3", size = .2),
 	  plot.margin = unit(c(0, 1, 0, 0), "cm")) + 
-      scale_x_continuous(breaks = round(seq(min(movie_subs$release_year, na.rm = T), max(movie_subs$release_year, na.rm = T), by = 10), 1)) + 
+      scale_x_continuous(breaks = round(seq(min(movie_subs$year, na.rm = T), max(movie_subs$year, na.rm = T), by = 10), 1)) + 
       scale_y_continuous(breaks = round(seq(min(movie_subs$avg_rating, na.rm = T), max(movie_subs$avg_rating, na.rm = T), by = .1), 1))
 
 ggsave(file = "figs/rating_over_time_by_platform.png")
@@ -211,7 +220,7 @@ ggsave(file = "figs/rating_over_time_by_platform.png")
 ## Correlation over time
 
 # Round to nearest decade
-movie_subs$decade <- round(movie_subs$release_year/10)*10
+movie_subs$decade <- round(movie_subs$year/10)*10
 
 time_corr <- movie_subs %>%
      select("decade", "IMDb_rating", "rotten_tomatoes_rating", "p_google_likes") %>%
