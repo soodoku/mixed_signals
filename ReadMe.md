@@ -25,7 +25,6 @@ Movies with the largest difference between Rotten Tomatoes and IMDb Rating.
 |title                        | rotten_tomatoes_rating| IMDb_rating|
 |:----------------------------|----------------------:|-----------:|
 |After Last Season            |                     92|         1.6|
-|The Grinch                   |                    100|         3.7|
 |The Catered Affair           |                     17|         7.5|
 |Sparkle                      |                     10|         6.9|
 |Only the Strong              |                      8|         6.7|
